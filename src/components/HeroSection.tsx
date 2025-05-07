@@ -58,7 +58,7 @@ export default function HeroSection() {
       }
     };
   
-    fetchLocation(); // Llamar la función de geolocalización al cargar el componente
+    fetchLocation();
   
   }, []); // Dependencias vacías, para ejecutarse solo una vez al montar el componente
 
