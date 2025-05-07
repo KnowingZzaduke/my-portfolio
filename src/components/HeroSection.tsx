@@ -38,7 +38,7 @@ export default function HeroSection() {
               setTime(now);
   
               // Enviar ubicación al backend
-              await fetch("/ubicacion", {
+              await fetch("https://18.236.90.228/ubicacion", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ city, country, lat, lon, time: now }),
