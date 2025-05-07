@@ -9,42 +9,47 @@ export default function HeroSection() {
   const [time, setTime] = useState("");
 
   useEffect(() => {
-    const fetchLocation = async (lat, lon) => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
-        );
-        const data = await res.json();
-        const city = data.address.city || data.address.town || data.address.village;
-        const country = data.address.country;
-
-        const now = new Date().toLocaleTimeString("es-CO", {
-          timeZone: "America/Bogota",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
+    const fetchLocation = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+    
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+            );
+            const data = await res.json();
+            const city = data.address.city || data.address.town || data.address.village;
+            const country = data.address.country;
+    
+            const now = new Date().toLocaleTimeString("es-CO", {
+              timeZone: "America/Bogota",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            });
+    
+            setLocationInfo(`${city}, ${country}`);
+            setTime(now);
+    
+            // Enviar ubicación al backend
+            await fetch("https://18.236.90.228/ubicacion", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ city, country, lat, lon, time: now }),
+            });
+          } catch (err) {
+            // No hacer nada si hay error
+          }
+        }, (error) => {
+          // Manejar errores si el usuario deniega el permiso
+          console.error("Error al obtener la ubicación: ", error);
         });
-
-        setLocationInfo(`${city}, ${country}`);
-        setTime(now);
-
-        // Enviar ubicación al backend
-        await fetch("https://18.236.90.228/ubicacion", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ city, country, lat, lon, time: now }),
-        });
-      } catch (err) {
-        // No hacer nada si hay error
+      } else {
+        console.log("Geolocalización no soportada en este navegador.");
       }
     };
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => fetchLocation(pos.coords.latitude, pos.coords.longitude),
-      () => {
-        // No mostrar nada si usuario niega permiso
-      }
-    );
   }, []);
 
   const containerVariants = {
