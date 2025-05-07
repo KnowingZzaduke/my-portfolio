@@ -9,59 +9,63 @@ export default function HeroSection() {
   const [time, setTime] = useState("");
 
   useEffect(() => {
-    console.log('useEffect se ejecutó');
+    console.log("useEffect se ejecutó");
   
-    const fetchLocation = async () => {
-      console.log('fetchLocation se ejecutó');
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-  
-            try {
-              const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
-              );
-              const data = await res.json();
-              const city = data.address.city || data.address.town || data.address.village;
-              const country = data.address.country;
-  
-              const now = new Date().toLocaleTimeString("es-CO", {
-                timeZone: "America/Bogota",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              });
-  
-              setLocationInfo(`${city}, ${country}`);
-              setTime(now);
-  
-              // Enviar ubicación al backend
-              await fetch("https://18.236.90.228/ubicacion", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ city, country, lat, lon, time: now }),
-              });
-            } catch (err) {
-              console.error("Error al obtener la ubicación:", err);
-            }
-          },
-          (error) => {
-            console.error("Error con la geolocalización:", error);
-            alert("No se pudo obtener la ubicación. ¿Has denegado los permisos?");
-          }
+    const fetchLocation = async (lat, lon) => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
         );
-      } else {
-        console.log("Geolocalización no soportada en este navegador.");
-        alert("Tu navegador no soporta geolocalización.");
+        const data = await res.json();
+        const city = data.address.city || data.address.town || data.address.village;
+        const country = data.address.country;
+  
+        const now = new Date().toLocaleTimeString("es-CO", {
+          timeZone: "America/Bogota",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+  
+        setLocationInfo(`${city}, ${country}`);
+        setTime(now);
+  
+        // Enviar ubicación al backend
+        const response = await fetch("https://18.236.90.228/ubicacion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ city, country, lat, lon, time: now }),
+        });
+  
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Error al enviar ubicación:", response.status, text);
+        } else {
+          console.log("Ubicación enviada exitosamente");
+        }
+      } catch (err) {
+        console.error("Error en fetchLocation:", err);
       }
     };
   
-    fetchLocation();
-  
-  }, []); // Dependencias vacías, para ejecutarse solo una vez al montar el componente
-
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          console.log("Ubicación obtenida:", lat, lon);
+          fetchLocation(lat, lon);
+        },
+        (error) => {
+          console.error("Error con la geolocalización:", error);
+          alert("No se pudo obtener la ubicación. ¿Has denegado los permisos?");
+        }
+      );
+    } else {
+      console.log("Geolocalización no soportada en este navegador.");
+      alert("Tu navegador no soporta geolocalización.");
+    }
+  }, []);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
