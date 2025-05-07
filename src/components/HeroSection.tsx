@@ -9,48 +9,58 @@ export default function HeroSection() {
   const [time, setTime] = useState("");
 
   useEffect(() => {
+    console.log('useEffect se ejecutó');
+  
     const fetchLocation = async () => {
+      console.log('fetchLocation se ejecutó');
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-    
-          try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
-            );
-            const data = await res.json();
-            const city = data.address.city || data.address.town || data.address.village;
-            const country = data.address.country;
-    
-            const now = new Date().toLocaleTimeString("es-CO", {
-              timeZone: "America/Bogota",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            });
-    
-            setLocationInfo(`${city}, ${country}`);
-            setTime(now);
-    
-            // Enviar ubicación al backend
-            await fetch("https://18.236.90.228/ubicacion", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ city, country, lat, lon, time: now }),
-            });
-          } catch (err) {
-            // No hacer nada si hay error
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+  
+            try {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+              );
+              const data = await res.json();
+              const city = data.address.city || data.address.town || data.address.village;
+              const country = data.address.country;
+  
+              const now = new Date().toLocaleTimeString("es-CO", {
+                timeZone: "America/Bogota",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              });
+  
+              setLocationInfo(`${city}, ${country}`);
+              setTime(now);
+  
+              // Enviar ubicación al backend
+              await fetch("/ubicacion", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ city, country, lat, lon, time: now }),
+              });
+            } catch (err) {
+              console.error("Error al obtener la ubicación:", err);
+            }
+          },
+          (error) => {
+            console.error("Error con la geolocalización:", error);
+            alert("No se pudo obtener la ubicación. ¿Has denegado los permisos?");
           }
-        }, (error) => {
-          // Manejar errores si el usuario deniega el permiso
-          console.error("Error al obtener la ubicación: ", error);
-        });
+        );
       } else {
         console.log("Geolocalización no soportada en este navegador.");
+        alert("Tu navegador no soporta geolocalización.");
       }
     };
-  }, []);
+  
+    fetchLocation(); // Llamar la función de geolocalización al cargar el componente
+  
+  }, []); // Dependencias vacías, para ejecutarse solo una vez al montar el componente
 
   const containerVariants = {
     hidden: { opacity: 0 },
