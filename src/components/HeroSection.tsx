@@ -10,33 +10,39 @@ export default function HeroSection() {
 
   useEffect(() => {
     console.log("useEffect se ejecutó");
-  
+
     const fetchLocation = async (lat, lon) => {
       try {
+        // Obtener ciudad y país desde OpenStreetMap
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
         );
         const data = await res.json();
-        const city = data.address.city || data.address.town || data.address.village;
-        const country = data.address.country;
-  
+        const city = data.address.city || data.address.town || data.address.village || "Desconocido";
+        const country = data.address.country || "Desconocido";
+
         const now = new Date().toLocaleTimeString("es-CO", {
           timeZone: "America/Bogota",
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
         });
-  
+
         setLocationInfo(`${city}, ${country}`);
         setTime(now);
-  
-        // Enviar ubicación al backend
-        const response = await fetch("https://18.236.90.228/ubicacion", {
+
+        // Enviar ubicación a Supabase
+        const response = await fetch("https://yzoexqjdkrlcpkbqkmai.supabase.co/rest/v1/ubicaciones", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6b2V4cWpka3JsY3BrYnFrbWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2ODAwMTQsImV4cCI6MjA2MjI1NjAxNH0.dT6l9ODE9mS1E260ZfzZm37cXDW3nMfEzK6Fl4R003E",
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6b2V4cWpka3JsY3BrYnFrbWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2ODAwMTQsImV4cCI6MjA2MjI1NjAxNH0.dT6l9ODE9mS1E260ZfzZm37cXDW3nMfEzK6Fl4R003E",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
           body: JSON.stringify({ city, country, lat, lon, time: now }),
         });
-  
+
         if (!response.ok) {
           const text = await response.text();
           console.error("Error al enviar ubicación:", response.status, text);
@@ -47,7 +53,8 @@ export default function HeroSection() {
         console.error("Error en fetchLocation:", err);
       }
     };
-  
+
+    // Obtener ubicación del navegador
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
