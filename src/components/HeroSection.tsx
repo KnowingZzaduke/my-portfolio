@@ -65,7 +65,7 @@ export default function HeroSection() {
         },
         (error) => {
           console.error("Error con la geolocalización:", error);
-          alert("No se pudo obtener la ubicación. ¿Has denegado los permisos?");
+          alert("No se pudo obtener la ubicación. Por lo tanto, no se monstrará la ciudad y la hora");
         }
       );
     } else {
